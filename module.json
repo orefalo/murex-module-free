@@ -1,0 +1,13 @@
+[
+	{
+		"Name": "free",
+		"Summary": "An OSX substitution for linux 'free' command",
+		"Version": "1.0",
+		"Source": "free.mx",
+		"Dependencies": {
+			"Optional": [],
+			"Required": [],
+			"Platform": [ "posix" ]
+		}
+	}
+]
