@@ -1,7 +1,5 @@
-# function: free (description: "an OSX substitution for linux 'free' command")
-
 if { os darwin } then {
-	function: free {
+	function free {
 		# Use vm_stat and sysctl to get system info
 		@{vm_stat | regexp 'f/([0-9]+)/'} -> set vmstat
 
