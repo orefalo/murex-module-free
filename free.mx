@@ -1,60 +1,60 @@
-if { os darwin } then {
-	function free {
-		# Use vm_stat and sysctl to get system info
-		@{vm_stat | regexp 'f/([0-9]+)/'} -> set vmstat
 
-		#out $vmstat
+function free {
+	# Use vm_stat and sysctl to get system info
+	@{vm_stat | regexp 'f/([0-9]+)/'} -> set vmstat
 
-		# "Pages free:" 
-		$vmstat[1] -> set pfree
-		# "Pages wired down:"
-		$vmstat[6] -> set pwired
-		# "Pages inactive:" 
-		$vmstat[3] -> set pinact
-		# "Anonymous pages:"
-		$vmstat[14] -> set panon
-		# "Pages occupied by compressor:"
-		$vmstat[16] -> set pcomp
-		# "Pages purgeable:" 
-		$vmstat[7] -> set ppurge
-		# "File-backed pages:"
-		$vmstat[13] -> set pfback
+	#out $vmstat
 
-		${sysctl -n hw.memsize} -> set total_mem
+	# "Pages free:" 
+	$vmstat[1] -> set pfree
+	# "Pages wired down:"
+	$vmstat[6] -> set pwired
+	# "Pages inactive:" 
+	$vmstat[3] -> set pinact
+	# "Anonymous pages:"
+	$vmstat[14] -> set panon
+	# "Pages occupied by compressor:"
+	$vmstat[16] -> set pcomp
+	# "Pages purgeable:" 
+	$vmstat[7] -> set ppurge
+	# "File-backed pages:"
+	$vmstat[13] -> set pfback
 
-		#out $pfree $pwired $pinact $panon $pcomp $ppurge $pfback $total_mem
+	${sysctl -n hw.memsize} -> set total_mem
 
-		# Arithmetics
-		total_mem = $total_mem / 1073741824
-		round ($pfree * 4096 / 1073741824) 0.99 -> set pfree
-		round ($pwired * 4096 / 1073741824) 0.99 -> set pwired
-		round ($pinact * 4096 / 1073741824) 0.99 -> set pinact
-		round ($panon * 4096 / 1073741824) 0.99 -> set panon
-		round ($pcomp * 4096 / 1073741824) 0.99 -> set pcomp
-		round ($ppurge * 4096 / 1073741824) 0.99 -> set ppurge
-		round ($pfback * 4096 / 1073741824) 0.99 -> set pfback
+	#out $pfree $pwired $pinact $panon $pcomp $ppurge $pfback $total_mem
 
-		# OSX Activity monitor formulas
-		# thanks to http://apple.stackexchange.com/questions/81581/why-does-free-active-inactive-speculative-wired-not-equal-total-ram
-		round ($pfree + $pinact) 0.99 -> set free
-		round ($pfback + $ppurge) 0.99 -> set cached 
-		round ($panon - $ppurge) 0.99 -> set appmem
-		round ($appmem + $pwired + $pcomp) 0.99 -> set used
+	# Arithmetics
+	total_mem = $total_mem / 1073741824
+	round ($pfree * 4096 / 1073741824) 0.99 -> set pfree
+	round ($pwired * 4096 / 1073741824) 0.99 -> set pwired
+	round ($pinact * 4096 / 1073741824) 0.99 -> set pinact
+	round ($panon * 4096 / 1073741824) 0.99 -> set panon
+	round ($pcomp * 4096 / 1073741824) 0.99 -> set pcomp
+	round ($ppurge * 4096 / 1073741824) 0.99 -> set ppurge
+	round ($pfback * 4096 / 1073741824) 0.99 -> set pfback
 
-		# Display the hud     
-		out '              total     used     free   appmem    wired   compressed'
-		out "Mem:           $(total_mem)Gb   $(used)Gb   $(free)Gb   $(panon)Gb   $(pwired)Gb   $(pcomp)Gb"
-		out "+/- Cache:            $(cached)Gb   $(pinact)Gb"
+	# OSX Activity monitor formulas
+	# thanks to http://apple.stackexchange.com/questions/81581/why-does-free-active-inactive-speculative-wired-not-equal-total-ram
+	round ($pfree + $pinact) 0.99 -> set free
+	round ($pfback + $ppurge) 0.99 -> set cached 
+	round ($panon - $ppurge) 0.99 -> set appmem
+	round ($appmem + $pwired + $pcomp) 0.99 -> set used
 
-		# display swap usage if applicable
-		@{sysctl -n -o vm.swapusage | regexp 'f/([0-9]+.[0-9]+)/'} -> set swapusage
-		if { $swapusage[0] ~~ 0 } then {
-			round ($swapusage[1]*100/$swapusage[0]) 1 -> set swap_percent
-			out "Swap($(swap_percent)%):   $swapusage[0]Mb   $swapusage[1]Mb   $swapusage[2]Mb"
-		}	
+	# Display the hud     
+	out '              total     used     free   appmem    wired   compressed'
+	out "Mem:           $(total_mem)Gb   $(used)Gb   $(free)Gb   $(panon)Gb   $(pwired)Gb   $(pcomp)Gb"
+	out "+/- Cache:            $(cached)Gb   $(pinact)Gb"
 
-		# display load avg
-		@{sysctl -n -o vm.loadavg  | regexp 'f/([0-9]+.[0-9]+)/'} -> set load
-		out "Load Avg:      $load[0] $load[1] $load[2]"
-	} 
+	# display swap usage if applicable
+	@{sysctl -n -o vm.swapusage | regexp 'f/([0-9]+.[0-9]+)/'} -> set swapusage
+	if { $swapusage[0] ~~ 0 } then {
+		round ($swapusage[1]*100/$swapusage[0]) 1 -> set swap_percent
+		out "Swap($(swap_percent)%):   $swapusage[0]Mb   $swapusage[1]Mb   $swapusage[2]Mb"
+	}	
+
+	# display load avg
+	@{sysctl -n -o vm.loadavg  | regexp 'f/([0-9]+.[0-9]+)/'} -> set load
+	out "Load Avg:      $load[0] $load[1] $load[2]"
 } 
+
