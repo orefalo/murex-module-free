@@ -13,3 +13,9 @@ murex-package install https://github.com/orefalo/murex-module-free.git
 ```shell
 murex-package update
 ```
+
+## Remove
+
+```shell
+murex-package remove murex-module-free
+```
